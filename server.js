@@ -1,40 +1,39 @@
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const app = express();
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const express = require("express");
+const cors = require("cors");
+const dotenv = require("dotenv");
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
-app.use(cors({
-  origin: 'https://6856eb9bf4c1104610f91785--darling-dango-869a11.netlify.app',
-}));
+dotenv.config();
+
+const app = express();
+app.use(cors());
 app.use(express.json());
 
-app.get('/', (req, res) => {
-  res.send('Stripe backend ready!');
+app.get("/", (req, res) => {
+  res.send("Stripe backend ready!");
 });
 
-// ТОВА Е ВАЖНОТО - добави този маршрут!
-app.post('/create-checkout-session', async (req, res) => {
+app.post("/create-checkout-session", async (req, res) => {
   try {
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
+      payment_method_types: ["card"],
+      mode: "subscription", // ВАЖНО: за recurring ценови план
       line_items: [
         {
-          price: process.env.PRICE_ID, // добави го в .env
-          quantity: 1,
-        },
+          price: process.env.PRICE_ID,
+          quantity: 1
+        }
       ],
-      mode: 'payment',
-      success_url: 'https://example.com/success',
-      cancel_url: 'https://example.com/cancel',
+      success_url: "https://example.com/success",
+      cancel_url: "https://example.com/cancel"
     });
 
     res.json({ url: session.url });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Something went wrong' });
+  } catch (error) {
+    console.error("Error creating session:", error.message);
+    res.status(500).json({ error: error.message });
   }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+const PORT = process.env.PORT || 4242;
+app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
